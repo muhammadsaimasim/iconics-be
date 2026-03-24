@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Workshop Registration ─────────────────────────────────────────────────────
+
+model WorkshopRegistration {
+  id                    String   @id @default(cuid())
+  email                 String
+  fullName              String
+  mobileNumber          String
+  cnicNumber            String
+  institutionOrg        String
+  semesterDesignation   String
+  professionalAddress   String
+  highestDegree         String
+  resumeUrl             String?
+  quantumCourses        String   @db.Text
+  whyWorkshopHelps      String   @db.Text
+  travelArrangement     String   @db.Text
+  attendanceCertificate Boolean  @default(false)
+  termsAgreed           Boolean  @default(false)
+  status                String   @default("pending") // pending, approved, rejected
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("workshop_registrations")
+}
+
+// ─── Participant Registration (Conference) ──────────────────────────────────────
+
+model ParticipantRegistration {
+  id                  String   @id @default(cuid())
+  registrationType    String   // "professional" or "student"
+  email               String
+  fullName            String
+  rollNo              String?
+  department          String
+  institute           String
+  contactNo           String
+  stanTransactionId   String
+  transactionDate     DateTime
+  bankDetails         String
+  totalAmountPaid     String
+  transactionReceipt  String?  // Supabase storage URL
+  studentCard         String?  // Supabase storage URL
+  certified           Boolean  @default(false)
+  status              String   @default("pending") // pending, approved, rejected
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("participant_registrations")
+}
+
+// ─── Paper Registration ─────────────────────────────────────────────────────────
+
+model PaperRegistration {
+  id                  String   @id @default(cuid())
+  registrationType    String   // "academia_industry" or "student"
+  email               String
+  paperId             String
+  paperTitle          String
+  authorName          String
+  rollNo              String?
+  department          String
+  institution         String
+  contactNo           String
+  stanTransactionId   String
+  transactionDate     DateTime
+  bankDetails         String
+  totalAmountPaid     String
+  transactionReceipt  String?  // Supabase storage URL
+  studentCard         String?  // Supabase storage URL
+  certified           Boolean  @default(false)
+  hasCoAuthors        Boolean  @default(false)
+  status              String   @default("pending") // pending, approved, rejected
+  coAuthors           CoAuthorRegistration[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("paper_registrations")
+}
+
+// ─── Co-Author Registration ─────────────────────────────────────────────────────
+
+model CoAuthorRegistration {
+  id                  String   @id @default(cuid())
+  registrationType    String   // "academia_industry" or "student"
+  email               String
+  paperId             String
+  paperTitle          String
+  authorName          String
+  rollNo              String?
+  department          String
+  institution         String
+  contactNo           String
+  stanTransactionId   String
+  transactionDate     DateTime
+  bankDetails         String
+  totalAmountPaid     String
+  transactionReceipt  String?
+  studentCard         String?
+  certified           Boolean  @default(false)
+  paperRegistrationId String
+  paperRegistration   PaperRegistration @relation(fields: [paperRegistrationId], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("co_author_registrations")
+}
