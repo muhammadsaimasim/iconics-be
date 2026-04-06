@@ -7,7 +7,7 @@ const register = async (req, res, next) => {
       registrationType, email, fullName, rollNo,
       department, institute, contactNo,
       stanTransactionId, transactionDate, bankDetails,
-      totalAmountPaid, certified,
+      totalAmountPaid, certified, ieeeNumber,
     } = req.body;
 
     // Upload files
@@ -48,6 +48,7 @@ const register = async (req, res, next) => {
         transactionReceipt: transactionReceiptUrl,
         studentCard: studentCardUrl,
         certified: certified === true || certified === 'true',
+        ieeeNumber: ieeeNumber?.trim() || null,
       },
     });
 
@@ -86,4 +87,20 @@ const getById = async (req, res, next) => {
   }
 };
 
-module.exports = { register, getAll, getById };
+const checkIeee = async (req, res, next) => {
+  try {
+    const { number } = req.query;
+    if (!number?.trim()) {
+      return res.status(400).json({ success: false, message: 'IEEE number required.' });
+    }
+    const existing = await prisma.participantRegistration.findFirst({
+      where: { ieeeNumber: number.trim() },
+      select: { id: true },
+    });
+    res.json({ success: true, taken: !!existing });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { register, getAll, getById, checkIeee };

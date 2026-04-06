@@ -148,6 +148,7 @@ model ParticipantRegistration {
   totalAmountPaid     String
   transactionReceipt  String?  // Supabase storage URL
   studentCard         String?  // Supabase storage URL
+  ieeeNumber          String?  // IEEE membership number (optional, triggers discount)
   certified           Boolean  @default(false)
   status              String   @default("pending") // pending, approved, rejected
   createdAt           DateTime @default(now())
