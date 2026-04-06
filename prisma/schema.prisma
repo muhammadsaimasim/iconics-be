@@ -8,6 +8,104 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ─── Speaker ───────────────────────────────────────────────────────────────────
+
+model Speaker {
+  id          String   @id @default(cuid())
+  name        String
+  title       String
+  institution String
+  country     String
+  photo       String?  // Supabase URL
+  type        String   // "keynote" or "workshop"
+  bio         String   @db.Text
+  topics      String[] // array of topic strings
+  website     String?
+  linkedin    String?
+  scholar     String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("speakers")
+}
+
+// ─── Workshop ──────────────────────────────────────────────────────────────────
+
+model Workshop {
+  id               String            @id @default(cuid())
+  slug             String            @unique
+  title            String
+  tagline          String
+  description      String            @db.Text
+  posterImage      String?           // Supabase URL
+  registrationLink String?
+  targetAudience   String?           @db.Text
+  learningOutcomes String[]
+  order            Int               @default(0)
+  sessions         WorkshopSession[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@map("workshops")
+}
+
+model WorkshopSession {
+  id              String   @id @default(cuid())
+  workshopId      String
+  workshop        Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  title           String
+  instructorName  String
+  instructorTitle String
+  instructorInstitution String
+  instructorCountry     String
+  instructorPhoto       String?  // Supabase URL
+  topics          String[]
+  order           Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("workshop_sessions")
+}
+
+// ─── Important Date ────────────────────────────────────────────────────────────
+
+model ImportantDate {
+  id          String   @id @default(cuid())
+  date        String   // e.g. "June 30, 2026"
+  title       String
+  description String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("important_dates")
+}
+
+// ─── Track ─────────────────────────────────────────────────────────────────────
+
+model Track {
+  id     String       @id @default(cuid())
+  name   String
+  icon   String
+  order  Int          @default(0)
+  topics TrackTopic[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("tracks")
+}
+
+model TrackTopic {
+  id      String @id @default(cuid())
+  trackId String
+  track   Track  @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  name    String
+  order   Int    @default(0)
+
+  @@map("track_topics")
+}
+
 // ─── Workshop Registration ─────────────────────────────────────────────────────
 
 model WorkshopRegistration {
