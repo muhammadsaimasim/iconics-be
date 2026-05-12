@@ -58,11 +58,10 @@ app.use((err, _req, res, _next) => {
 
 // ─── Start (local dev) / Export (Vercel) ────────────────────────────────────
 
-if (process.env.NODE_ENV !== 'production') {
   const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`ICONICS Backend running on http://localhost:${PORT}`);
   });
-}
+
 
 module.exports = app;
