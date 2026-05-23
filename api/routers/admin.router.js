@@ -7,6 +7,8 @@ const workshopController = require('../controllers/admin/workshop.controller');
 const dateController = require('../controllers/admin/date.controller');
 const trackController = require('../controllers/admin/track.controller');
 const registrationController = require('../controllers/admin/registration.controller');
+const committeeController = require('../controllers/admin/committee.controller');
+const settingsController = require('../controllers/admin/settings.controller');
 const multer = require('multer');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -51,6 +53,16 @@ router.delete('/tracks/:id', trackController.remove);
 router.post('/tracks/:trackId/topics', trackController.addTopic);
 router.put('/tracks/:trackId/topics/:topicId', trackController.updateTopic);
 router.delete('/tracks/:trackId/topics/:topicId', trackController.removeTopic);
+
+// ── Committee Members ─────────────────────────────────────────────────────────
+router.get('/committee', committeeController.getAll);
+router.post('/committee', committeeController.create);
+router.put('/committee/:id', committeeController.update);
+router.delete('/committee/:id', committeeController.remove);
+
+// ── Site Settings ─────────────────────────────────────────────────────────────
+router.get('/settings', settingsController.getAll);
+router.put('/settings', settingsController.upsert);
 
 // ── Registrations (read + CSV export) ────────────────────────────────────────
 router.get('/registrations/workshop', registrationController.getWorkshop);

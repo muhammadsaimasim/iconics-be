@@ -222,7 +222,7 @@ async function main() {
   await prisma.importantDate.deleteMany();
   await prisma.importantDate.createMany({
     data: [
-      { date: 'June 30, 2026', title: 'Paper Submission Deadline', description: 'Final date for paper submissions via EasyChair', order: 1 },
+      { date: 'June 30, 2026', title: 'Paper Submission Deadline', description: 'Final date for paper submissions via PaperDesk', order: 1 },
       { date: 'August 15, 2026', title: 'Notification of Acceptance', description: 'Authors will be notified via email', order: 2 },
       { date: 'September 10, 2026', title: 'Camera-Ready Submission', description: 'Submit final version of accepted papers', order: 3 },
       { date: 'September 20, 2026', title: 'Early Bird Registration', description: 'Last day for discounted registration fees', order: 4 },

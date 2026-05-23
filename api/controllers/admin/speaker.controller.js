@@ -1,6 +1,12 @@
 const prisma = require('../../../utils/prisma');
 const { uploadFile } = require('../../../utils/supabase');
 
+const parseTopics = (topics) => {
+  if (Array.isArray(topics)) return topics;
+  if (!topics) return [];
+  try { return JSON.parse(topics); } catch { return [topics]; }
+};
+
 const getAll = async (_req, res, next) => {
   try {
     const speakers = await prisma.speaker.findMany({ orderBy: { order: 'asc' } });
@@ -20,7 +26,7 @@ const create = async (req, res, next) => {
     const speaker = await prisma.speaker.create({
       data: {
         name, title, institution, country, type, bio,
-        topics: Array.isArray(topics) ? topics : JSON.parse(topics || '[]'),
+        topics: parseTopics(topics),
         photo, website: website || null, linkedin: linkedin || null, scholar: scholar || null,
         order: parseInt(order) || 0,
       },
@@ -40,7 +46,7 @@ const update = async (req, res, next) => {
 
     const data = {
       name, title, institution, country, type, bio,
-      topics: Array.isArray(topics) ? topics : JSON.parse(topics || '[]'),
+      topics: parseTopics(topics),
       website: website || null, linkedin: linkedin || null, scholar: scholar || null,
       order: parseInt(order) || 0,
     };

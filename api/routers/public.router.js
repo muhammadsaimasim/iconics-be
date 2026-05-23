@@ -43,4 +43,24 @@ router.get('/tracks', async (_req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Committee Members
+router.get('/committee', async (_req, res, next) => {
+  try {
+    const data = await prisma.committeeMember.findMany({
+      orderBy: [{ order: 'asc' }],
+    });
+    res.json({ success: true, data });
+  } catch (e) { next(e); }
+});
+
+// Site Settings
+router.get('/settings', async (_req, res, next) => {
+  try {
+    const rows = await prisma.siteSetting.findMany();
+    const settings = { speakers_active: 'true', schedule_active: 'true' };
+    rows.forEach(r => { settings[r.key] = r.value; });
+    res.json({ success: true, data: settings });
+  } catch (e) { next(e); }
+});
+
 module.exports = router;

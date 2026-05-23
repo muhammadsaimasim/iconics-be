@@ -106,6 +106,34 @@ model TrackTopic {
   @@map("track_topics")
 }
 
+// ─── Committee Member ──────────────────────────────────────────────────────────
+
+model CommitteeMember {
+  id             String   @id @default(cuid())
+  committeeName  String   // e.g. "Organizing Committee", "Publications Committee"
+  name           String
+  role           String   // e.g. "Chair", "Member", "Patron-in-Chief"
+  institution    String?
+  email          String?
+  isChair        Boolean  @default(false)
+  order          Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("committee_members")
+}
+
+// ─── Site Settings ─────────────────────────────────────────────────────────────
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
 // ─── Workshop Registration ─────────────────────────────────────────────────────
 
 model WorkshopRegistration {
