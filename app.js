@@ -18,6 +18,8 @@ const allowedOrigins = [
   process.env.CLIENT_URL,
   'http://localhost:5173',
   'https://nediconics.vercel.app',
+  'https://iconics.neduet.edu.pk',
+  'https://www.iconics.neduet.edu.pk',
 ].filter(Boolean);
 
 app.use(cors({
