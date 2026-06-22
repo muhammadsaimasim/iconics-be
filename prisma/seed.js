@@ -222,9 +222,9 @@ async function main() {
   await prisma.importantDate.deleteMany();
   await prisma.importantDate.createMany({
     data: [
-      { date: 'June 30, 2026', title: 'Paper Submission Deadline', description: 'Final date for paper submissions via PaperDesk', order: 1 },
-      { date: 'August 15, 2026', title: 'Notification of Acceptance', description: 'Authors will be notified via email', order: 2 },
-      { date: 'September 10, 2026', title: 'Camera-Ready Submission', description: 'Submit final version of accepted papers', order: 3 },
+      { date: 'July 30, 2026', title: 'Paper Submission Deadline', description: 'Final date for paper submissions via PaperDesk', order: 1 },
+      { date: 'August 30, 2026', title: 'Notification of Acceptance', description: 'Authors will be notified via email', order: 2 },
+      { date: 'September 15, 2026', title: 'Camera-Ready Submission', description: 'Submit final version of accepted papers', order: 3 },
       { date: 'September 20, 2026', title: 'Early Bird Registration', description: 'Last day for discounted registration fees', order: 4 },
       { date: 'October 20-21, 2026', title: 'Conference Dates', description: 'Main conference event at NED University', order: 5 },
     ],
@@ -236,14 +236,12 @@ async function main() {
   await prisma.track.deleteMany();
 
   const tracksData = [
-    { name: 'Artificial Intelligence & Machine Learning', icon: '🤖', order: 1, topics: ['Deep Learning', 'Neural Networks', 'Reinforcement Learning', 'Computer Vision', 'Natural Language Processing', 'Explainable AI'] },
-    { name: 'Quantum Computing & Technologies', icon: '⚛️', order: 2, topics: ['Quantum Algorithms', 'Quantum Cryptography', 'Quantum Machine Learning', 'Quantum Communication', 'Quantum Error Correction'] },
-    { name: 'Cybersecurity & Privacy', icon: '🔒', order: 3, topics: ['Network Security', 'Cryptography', 'Blockchain', 'Privacy-Preserving Computing', 'Threat Detection', 'Security Analytics'] },
-    { name: 'Internet of Things (IoT)', icon: '📡', order: 4, topics: ['IoT Architectures', 'Edge Computing', 'Smart Cities', 'Industrial IoT', 'IoT Security', 'Sensor Networks'] },
-    { name: 'Software Engineering', icon: '💻', order: 5, topics: ['Software Architecture', 'DevOps', 'Agile Methodologies', 'Software Testing', 'Requirements Engineering', 'Software Maintenance'] },
-    { name: 'Data Science & Big Data', icon: '📊', order: 6, topics: ['Data Mining', 'Big Data Analytics', 'Data Visualization', 'Business Intelligence', 'Predictive Analytics', 'Data Engineering'] },
-    { name: 'Human-Computer Interaction', icon: '👤', order: 7, topics: ['User Experience Design', 'Accessibility', 'Virtual & Augmented Reality', 'Interactive Systems', 'Usability Engineering'] },
-    { name: 'Cloud & Distributed Computing', icon: '☁️', order: 8, topics: ['Cloud Architecture', 'Distributed Systems', 'Serverless Computing', 'Container Orchestration', 'Microservices'] },
+    { name: 'Artificial Intelligence and Machine Learning', icon: '🤖', order: 1, topics: ['Artificial Intelligence', 'Neural Networks & Deep Learning', 'Large Language Models & Generative AI', 'Agentic AI & Autonomous Systems', 'Explainable & Trustworthy AI', 'AI Ethics & Governance', 'Computer Vision & Pattern Recognition', 'Speech & Natural Language Processing'] },
+    { name: 'Data, Cloud & Computing', icon: '☁️', order: 2, topics: ['Big Data Analytics', 'Cloud Computing', 'Edge AI & TinyML', 'Green & Sustainable Computing', 'High Performance Computing', 'Digital Twins'] },
+    { name: 'Security & Cryptography', icon: '🔒', order: 3, topics: ['Cyber Security', 'Network Security', 'Blockchain Technologies', 'Quantum Cryptography', 'Post-Quantum Cryptography', 'AI Security & Adversarial ML'] },
+    { name: 'Quantum & Emerging Technologies', icon: '⚛️', order: 4, topics: ['Quantum Computing', 'Quantum AI for Decision Making', 'Quantum Simulators', 'Neuromorphic Computing', 'Evolutionary Computation'] },
+    { name: 'Networks, IoT & Smart Systems', icon: '📡', order: 5, topics: ['Internet of Things (IoT)', 'Computer Networks', '6G & Next-Gen Networks', 'Wireless Sensor Networks (WSN)', 'Smart City Architecture'] },
+    { name: 'Software, Web & Applications', icon: '💻', order: 6, topics: ['Software Engineering', 'Web Technologies', 'Data Mining', 'Multimodal AI Systems', 'AI in Healthcare & Bioinformatics'] },
   ];
 
   for (const t of tracksData) {
