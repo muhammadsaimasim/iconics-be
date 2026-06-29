@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
 const { verifyAdmin } = require('../middlewares/auth.middleware');
 const authController = require('../controllers/admin/auth.controller');
 const speakerController = require('../controllers/admin/speaker.controller');
@@ -66,7 +68,17 @@ router.get('/settings', settingsController.getAll);
 router.put('/settings', settingsController.upsert);
 
 // ── CFP Assets (poster + PDF guidelines) ─────────────────────────────────────
-const cfpUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+const CFP_DIR = path.join(__dirname, '../../uploads/cfp');
+const cfpStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    fs.mkdirSync(CFP_DIR, { recursive: true });
+    cb(null, CFP_DIR);
+  },
+  filename: (_req, file, cb) => {
+    cb(null, `${Date.now()}${path.extname(file.originalname)}`);
+  },
+});
+const cfpUpload = multer({ storage: cfpStorage, limits: { fileSize: 50 * 1024 * 1024 } });
 router.put('/cfp-assets', cfpUpload.fields([
   { name: 'poster', maxCount: 1 },
   { name: 'authorGuidelines', maxCount: 1 },
