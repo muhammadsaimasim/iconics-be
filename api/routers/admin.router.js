@@ -9,6 +9,7 @@ const trackController = require('../controllers/admin/track.controller');
 const registrationController = require('../controllers/admin/registration.controller');
 const committeeController = require('../controllers/admin/committee.controller');
 const settingsController = require('../controllers/admin/settings.controller');
+const cfpController = require('../controllers/admin/cfp.controller');
 const multer = require('multer');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -63,6 +64,14 @@ router.delete('/committee/:id', committeeController.remove);
 // ── Site Settings ─────────────────────────────────────────────────────────────
 router.get('/settings', settingsController.getAll);
 router.put('/settings', settingsController.upsert);
+
+// ── CFP Assets (poster + PDF guidelines) ─────────────────────────────────────
+const cfpUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+router.put('/cfp-assets', cfpUpload.fields([
+  { name: 'poster', maxCount: 1 },
+  { name: 'authorGuidelines', maxCount: 1 },
+  { name: 'reviewerGuidelines', maxCount: 1 },
+]), cfpController.upsertCfpAssets);
 
 // ── Registrations (read + CSV export) ────────────────────────────────────────
 router.get('/registrations/workshop', registrationController.getWorkshop);
