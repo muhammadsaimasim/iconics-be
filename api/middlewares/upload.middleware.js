@@ -1,19 +1,24 @@
 const multer = require('multer');
+const path = require('path');
 
 // Store files in memory buffer for Supabase upload
 const storage = multer.memoryStorage();
 
-const fileFilter = (_req, file, cb) => {
-  const allowed = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'image/png',
-    'image/jpeg',
-    'image/jpg',
-  ];
+const allowedMimes = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+];
+const allowedExtensions = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg'];
 
-  if (allowed.includes(file.mimetype)) {
+const fileFilter = (_req, file, cb) => {
+  // Mobile browsers/file pickers often report generic mimetypes (e.g. application/octet-stream)
+  // for valid files, so fall back to checking the file extension.
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedMimes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
     cb(new Error('Invalid file type. Only PDF, DOC, DOCX, PNG, and JPG are allowed.'), false);
