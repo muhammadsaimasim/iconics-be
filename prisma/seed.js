@@ -112,6 +112,8 @@ async function main() {
   console.log('✓ Speakers seeded');
 
   // ── Workshops ────────────────────────────────────────────────────────────────
+  // Skipped for this seed run — workshop details are not being added to the site.
+  /*
   await prisma.workshopSession.deleteMany();
   await prisma.workshop.deleteMany();
 
@@ -217,15 +219,16 @@ async function main() {
     },
   });
   console.log('✓ Workshops seeded');
+  */
 
   // ── Important Dates ──────────────────────────────────────────────────────────
   await prisma.importantDate.deleteMany();
   await prisma.importantDate.createMany({
     data: [
-      { date: 'July 30, 2026', title: 'Paper Submission Deadline', description: 'Final date for paper submissions via PaperDesk', order: 1 },
-      { date: 'August 30, 2026', title: 'Notification of Acceptance', description: 'Authors will be notified via email', order: 2 },
-      { date: 'September 15, 2026', title: 'Camera-Ready Submission', description: 'Submit final version of accepted papers', order: 3 },
-      { date: 'September 20, 2026', title: 'Early Bird Registration', description: 'Last day for discounted registration fees', order: 4 },
+      { date: 'August 15, 2026', title: 'Paper Submission Deadline', description: 'Final date for paper submissions', order: 1 },
+      { date: 'August 30, 2026', title: 'Paper Acceptance', description: 'Authors will be notified of acceptance', order: 2 },
+      { date: 'September 15, 2026', title: 'Early Bird Deadline', description: 'Last day for discounted registration fees', order: 3 },
+      { date: 'September 15, 2026', title: 'Camera Ready Submission', description: 'Submit final version of accepted papers', order: 4 },
       { date: 'October 20-21, 2026', title: 'Conference Dates', description: 'Main conference event at NED University', order: 5 },
     ],
   });
@@ -236,12 +239,12 @@ async function main() {
   await prisma.track.deleteMany();
 
   const tracksData = [
-    { name: 'Artificial Intelligence and Machine Learning', icon: '🤖', order: 1, topics: ['Artificial Intelligence', 'Neural Networks & Deep Learning', 'Large Language Models & Generative AI', 'Agentic AI & Autonomous Systems', 'Explainable & Trustworthy AI', 'AI Ethics & Governance', 'Computer Vision & Pattern Recognition', 'Speech & Natural Language Processing'] },
-    { name: 'Data, Cloud & Computing', icon: '☁️', order: 2, topics: ['Big Data Analytics', 'Cloud Computing', 'Edge AI & TinyML', 'Green & Sustainable Computing', 'High Performance Computing', 'Digital Twins'] },
-    { name: 'Security & Cryptography', icon: '🔒', order: 3, topics: ['Cyber Security', 'Network Security', 'Blockchain Technologies', 'Quantum Cryptography', 'Post-Quantum Cryptography', 'AI Security & Adversarial ML'] },
-    { name: 'Quantum & Emerging Technologies', icon: '⚛️', order: 4, topics: ['Quantum Computing', 'Quantum AI for Decision Making', 'Quantum Simulators', 'Neuromorphic Computing', 'Evolutionary Computation'] },
-    { name: 'Networks, IoT & Smart Systems', icon: '📡', order: 5, topics: ['Internet of Things (IoT)', 'Computer Networks', '6G & Next-Gen Networks', 'Wireless Sensor Networks (WSN)', 'Smart City Architecture'] },
-    { name: 'Software, Web & Applications', icon: '💻', order: 6, topics: ['Software Engineering', 'Web Technologies', 'Data Mining', 'Multimodal AI Systems', 'AI in Healthcare & Bioinformatics'] },
+    { name: 'Artificial Intelligence & Intelligent Systems', icon: '🧠', order: 1, topics: ['Machine Learning & Deep Learning', 'LLMs & Generative AI', 'Agentic & Autonomous Systems', 'Explainable, Trustworthy & Ethical AI', 'Computer Vision', 'NLP & Speech Technologies'] },
+    { name: 'Quantum Technologies', icon: '⚛️', order: 2, topics: ['Quantum Simulators', 'Quantum Artificial Intelligence', 'Post-Quantum Cryptography', 'Quantum Security', 'Quantum Secure Direct Communication', 'Quantum Algorithms'] },
+    { name: 'Cyber Security & Digital Trust', icon: '🛡️', order: 3, topics: ['Cyber Security', 'Network Security', 'Cryptography', 'Blockchain Technologies', 'AI Security & Adversarial ML', 'Privacy, Governance & Digital Trust'] },
+    { name: 'Networks, IoT & Smart Environments', icon: '📶', order: 4, topics: ['Computer Networks', '6G & Future Communication Systems', 'NextGen IoT & Industrial Automation', 'Wireless Sensor Networks', 'Smart Cities & Infrastructure'] },
+    { name: 'Software Systems & Applications', icon: '💻', order: 5, topics: ['Software Engineering', 'Web & Mobile Technologies', 'Human-Computer Interaction', 'Software Quality, Testing & DevOps', 'Immersive Technologies'] },
+    { name: 'Data Analytics & Advanced Computing', icon: '📈', order: 6, topics: ['Data Science & Analytics', 'Big Data Technologies', 'Cloud Computing', 'High-Performance Computing', 'Green & Sustainable Computing', 'Digital Twins'] },
   ];
 
   for (const t of tracksData) {
