@@ -67,7 +67,7 @@ router.delete('/committee/:id', committeeController.remove);
 router.get('/settings', settingsController.getAll);
 router.put('/settings', settingsController.upsert);
 
-// ── CFP Assets (poster + PDF guidelines) ─────────────────────────────────────
+// ── CFP Assets (poster + LaTeX template zip) ─────────────────────────────────
 const CFP_DIR = path.join(__dirname, '../../uploads/cfp');
 const cfpStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
@@ -81,8 +81,7 @@ const cfpStorage = multer.diskStorage({
 const cfpUpload = multer({ storage: cfpStorage, limits: { fileSize: 50 * 1024 * 1024 } });
 router.put('/cfp-assets', cfpUpload.fields([
   { name: 'poster', maxCount: 1 },
-  { name: 'authorGuidelines', maxCount: 1 },
-  { name: 'reviewerGuidelines', maxCount: 1 },
+  { name: 'latexTemplate', maxCount: 1 },
 ]), cfpController.upsertCfpAssets);
 
 // ── Registrations (read + CSV export) ────────────────────────────────────────

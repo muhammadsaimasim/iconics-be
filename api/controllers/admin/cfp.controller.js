@@ -8,12 +8,8 @@ const upsertCfpAssets = async (req, res, next) => {
       updates.push({ key: 'cfp_poster_url', value: `/uploads/cfp/${req.files.poster[0].filename}` });
     }
 
-    if (req.files?.authorGuidelines?.[0]) {
-      updates.push({ key: 'cfp_author_guidelines_url', value: `/uploads/cfp/${req.files.authorGuidelines[0].filename}` });
-    }
-
-    if (req.files?.reviewerGuidelines?.[0]) {
-      updates.push({ key: 'cfp_reviewer_guidelines_url', value: `/uploads/cfp/${req.files.reviewerGuidelines[0].filename}` });
+    if (req.files?.latexTemplate?.[0]) {
+      updates.push({ key: 'cfp_latex_template_url', value: `/uploads/cfp/${req.files.latexTemplate[0].filename}` });
     }
 
     if (updates.length === 0) {
