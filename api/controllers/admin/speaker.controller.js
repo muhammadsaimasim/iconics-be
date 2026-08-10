@@ -20,7 +20,7 @@ const create = async (req, res, next) => {
     let photo = req.body.photo || null;
 
     if (req.file) {
-      photo = await uploadFile(req.file.buffer, req.file.originalname, 'registrations', 'speakers');
+      photo = await uploadFile(req.file.buffer, req.file.originalname, 'registerations', 'speakers');
     }
 
     const speaker = await prisma.speaker.create({
@@ -41,7 +41,7 @@ const update = async (req, res, next) => {
     let photo = req.body.photo;
 
     if (req.file) {
-      photo = await uploadFile(req.file.buffer, req.file.originalname, 'registrations', 'speakers');
+      photo = await uploadFile(req.file.buffer, req.file.originalname, 'registerations', 'speakers');
     }
 
     const data = {

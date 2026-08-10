@@ -19,7 +19,7 @@ const register = async (req, res, next) => {
       transactionReceiptUrl = await uploadFile(
         req.files.transactionReceipt[0].buffer,
         req.files.transactionReceipt[0].originalname,
-        'registrations',
+        'registerations',
         'paper-receipts'
       );
     }
@@ -28,7 +28,7 @@ const register = async (req, res, next) => {
       studentCardUrl = await uploadFile(
         req.files.studentCard[0].buffer,
         req.files.studentCard[0].originalname,
-        'registrations',
+        'registerations',
         'paper-student-cards'
       );
     }
@@ -118,7 +118,7 @@ const addCoAuthor = async (req, res, next) => {
       transactionReceiptUrl = await uploadFile(
         req.files.transactionReceipt[0].buffer,
         req.files.transactionReceipt[0].originalname,
-        'registrations',
+        'registerations',
         'coauthor-receipts'
       );
     }
@@ -127,7 +127,7 @@ const addCoAuthor = async (req, res, next) => {
       studentCardUrl = await uploadFile(
         req.files.studentCard[0].buffer,
         req.files.studentCard[0].originalname,
-        'registrations',
+        'registerations',
         'coauthor-student-cards'
       );
     }

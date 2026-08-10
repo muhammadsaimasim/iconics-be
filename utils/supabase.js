@@ -13,7 +13,7 @@ const supabase = createClient(
  * @param {string} folder - Folder path within the bucket
  * @returns {Promise<string>} Public URL of the uploaded file
  */
-async function uploadFile(buffer, fileName, bucket = 'registrations', folder = 'uploads') {
+async function uploadFile(buffer, fileName, bucket = 'registerations', folder = 'uploads') {
   const timestamp = Date.now();
   const sanitized = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
   const path = `${folder}/${timestamp}_${sanitized}`;

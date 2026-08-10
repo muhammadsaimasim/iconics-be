@@ -16,7 +16,7 @@ const register = async (req, res, next) => {
       resumeUrl = await uploadFile(
         req.file.buffer,
         req.file.originalname,
-        'registrations',
+        'registerations',
         'workshop-resumes'
       );
     }

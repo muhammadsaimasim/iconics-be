@@ -16,7 +16,7 @@ const create = async (req, res, next) => {
     const { slug, title, tagline, description, registrationLink, targetAudience, learningOutcomes, order } = req.body;
     let posterImage = req.body.posterImage || null;
     if (req.file) {
-      posterImage = await uploadFile(req.file.buffer, req.file.originalname, 'registrations', 'workshops');
+      posterImage = await uploadFile(req.file.buffer, req.file.originalname, 'registerations', 'workshops');
     }
     const workshop = await prisma.workshop.create({
       data: {
@@ -36,7 +36,7 @@ const update = async (req, res, next) => {
     const { slug, title, tagline, description, registrationLink, targetAudience, learningOutcomes, order } = req.body;
     let posterImage = req.body.posterImage;
     if (req.file) {
-      posterImage = await uploadFile(req.file.buffer, req.file.originalname, 'registrations', 'workshops');
+      posterImage = await uploadFile(req.file.buffer, req.file.originalname, 'registerations', 'workshops');
     }
     const data = {
       slug, title, tagline, description,
@@ -75,7 +75,7 @@ const createSession = async (req, res, next) => {
     const { title, instructorName, instructorTitle, instructorInstitution, instructorCountry, topics, order } = req.body;
     let instructorPhoto = req.body.instructorPhoto || null;
     if (req.file) {
-      instructorPhoto = await uploadFile(req.file.buffer, req.file.originalname, 'registrations', 'speakers');
+      instructorPhoto = await uploadFile(req.file.buffer, req.file.originalname, 'registerations', 'speakers');
     }
     const session = await prisma.workshopSession.create({
       data: {
@@ -95,7 +95,7 @@ const updateSession = async (req, res, next) => {
     const { title, instructorName, instructorTitle, instructorInstitution, instructorCountry, topics, order } = req.body;
     let instructorPhoto = req.body.instructorPhoto;
     if (req.file) {
-      instructorPhoto = await uploadFile(req.file.buffer, req.file.originalname, 'registrations', 'speakers');
+      instructorPhoto = await uploadFile(req.file.buffer, req.file.originalname, 'registerations', 'speakers');
     }
     const data = {
       title, instructorName, instructorTitle, instructorInstitution, instructorCountry,
