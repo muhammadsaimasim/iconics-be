@@ -13,6 +13,7 @@ const committeeController = require('../controllers/admin/committee.controller')
 const settingsController = require('../controllers/admin/settings.controller');
 const cfpController = require('../controllers/admin/cfp.controller');
 const previousConferenceController = require('../controllers/admin/previousConference.controller');
+const reviewerController = require('../controllers/admin/reviewer.controller');
 const multer = require('multer');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -67,6 +68,11 @@ router.delete('/committee/:id', committeeController.remove);
 // ─── Previous Conference Publications ───────────────────────────────────────
 router.get('/previous-conference-publications', previousConferenceController.getAll);
 router.put('/previous-conference-publications/:year', previousConferenceController.upsert);
+
+router.get('/reviewers', reviewerController.getAll);
+router.post('/reviewers', upload.single('photo'), reviewerController.create);
+router.put('/reviewers/:id', upload.single('photo'), reviewerController.update);
+router.delete('/reviewers/:id', reviewerController.remove);
 
 // ── Site Settings ─────────────────────────────────────────────────────────────
 router.get('/settings', settingsController.getAll);

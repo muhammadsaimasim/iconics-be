@@ -61,6 +61,11 @@ router.get('/previous-conference-publications', async (_req, res, next) => {
   } catch (e) { next(e); }
 });
 
+router.get('/reviewers', async (_req, res, next) => {
+  try { res.json({ success: true, data: await prisma.reviewer.findMany({ orderBy: [{ order: 'asc' }, { name: 'asc' }] }) }); }
+  catch (e) { next(e); }
+});
+
 // Site Settings
 router.get('/settings', async (_req, res, next) => {
   try {
