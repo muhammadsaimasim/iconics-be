@@ -53,6 +53,14 @@ router.get('/committee', async (_req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Previous conference journal metadata
+router.get('/previous-conference-publications', async (_req, res, next) => {
+  try {
+    const data = await prisma.previousConferencePublication.findMany({ orderBy: { year: 'desc' } });
+    res.json({ success: true, data });
+  } catch (e) { next(e); }
+});
+
 // Site Settings
 router.get('/settings', async (_req, res, next) => {
   try {

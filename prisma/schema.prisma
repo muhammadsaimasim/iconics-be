@@ -134,6 +134,19 @@ model SiteSetting {
   @@map("site_settings")
 }
 
+// ─── Previous conference journal metadata ───────────────────────────────────
+model PreviousConferencePublication {
+  id          String   @id @default(cuid())
+  year        String   @unique
+  journalUrl  String?
+  isbn        String?
+  issn        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("previous_conference_publications")
+}
+
 // ─── Workshop Registration ─────────────────────────────────────────────────────
 
 model WorkshopRegistration {
