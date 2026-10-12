@@ -1,11 +1,16 @@
 const prisma = require('../../../utils/prisma');
+const { toPrivatePath, createSignedUrl } = require('../../../utils/supabase');
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 function toCSV(rows, columns) {
   const escape = (v) => {
-    const s = v == null ? '' : String(v).replace(/"/g, '""');
-    return `"${s}"`;
+    let s = v == null ? '' : (v instanceof Date ? v.toISOString() : String(v));
+    // Registrant-supplied text starting with = + - @ (or tab/CR) is run as a
+    // formula by Excel/Sheets. Prefix with ' so it is shown as plain text.
+    // Purely numeric values (e.g. "+92 300 1234567") can't carry a payload and are left as-is.
+    if (/^[=+\-@\t\r]/.test(s) && !/^[+-]?[\d\s().-]+$/.test(s)) s = `'${s}`;
+    return `"${s.replace(/"/g, '""')}"`;
   };
   const header = columns.map((c) => escape(c.label)).join(',');
   const body = rows.map((row) => columns.map((c) => escape(row[c.key])).join(',')).join('\n');
@@ -126,4 +131,33 @@ const exportPaper = async (_req, res, next) => {
   } catch (e) { next(e); }
 };
 
-module.exports = { getWorkshop, exportWorkshop, getParticipant, exportParticipant, getPaper, exportPaper };
+// ── Documents (private bucket) ───────────────────────────────────────────────
+
+// Which columns hold document references, per registration kind.
+const DOCUMENT_FIELDS = {
+  workshop: { model: 'workshopRegistration', fields: ['resumeUrl'] },
+  participant: { model: 'participantRegistration', fields: ['transactionReceipt', 'studentCard'] },
+  paper: { model: 'paperRegistration', fields: ['transactionReceipt', 'studentCard'] },
+  coauthor: { model: 'coAuthorRegistration', fields: ['transactionReceipt', 'studentCard'] },
+};
+
+// GET /api/admin/registrations/:kind/:id/file/:field → short-lived signed URL.
+// Looks the path up from the DB row, so callers can't request arbitrary objects.
+const getDocumentUrl = async (req, res, next) => {
+  try {
+    const { kind, id, field } = req.params;
+    const spec = DOCUMENT_FIELDS[kind];
+    if (!spec || !spec.fields.includes(field)) {
+      return res.status(404).json({ success: false, message: 'Not found' });
+    }
+    const row = await prisma[spec.model].findUnique({ where: { id }, select: { [field]: true } });
+    const objectPath = toPrivatePath(row?.[field]);
+    if (!objectPath) {
+      return res.status(404).json({ success: false, message: 'No file on record' });
+    }
+    console.log(`Document access: ${req.admin.email} → ${kind}/${id}/${field}`);
+    res.json({ success: true, url: await createSignedUrl(objectPath) });
+  } catch (e) { next(e); }
+};
+
+module.exports = { getWorkshop, exportWorkshop, getParticipant, exportParticipant, getPaper, exportPaper, getDocumentUrl };

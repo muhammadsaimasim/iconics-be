@@ -1,46 +1,82 @@
-const multer = require('multer');
+﻿const multer = require('multer');
 const path = require('path');
 
-// Store files in memory buffer for Supabase upload
+// Store files in memory buffer for Supabase upload. Limits below keep the
+// worst-case memory per request small (a few MB, not hundreds).
 const storage = multer.memoryStorage();
 
-const allowedMimes = [
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'image/png',
-  'image/jpeg',
-  'image/jpg',
-];
-const allowedExtensions = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg'];
+const DOC_EXTENSIONS = ['.pdf', '.doc', '.docx', '.png', '.jpg', '.jpeg'];
+const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp'];
 
-const fileFilter = (_req, file, cb) => {
-  // Mobile browsers/file pickers often report generic mimetypes (e.g. application/octet-stream)
-  // for valid files, so fall back to checking the file extension.
+// File signatures ("magic bytes"). The extension and the client-reported
+// mimetype are attacker-controlled, so the content itself is checked too.
+const SIGNATURES = {
+  '.pdf': [[0x25, 0x50, 0x44, 0x46]],                          // %PDF
+  '.png': [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+  '.jpg': [[0xff, 0xd8, 0xff]],
+  '.jpeg': [[0xff, 0xd8, 0xff]],
+  '.doc': [[0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]],   // OLE2
+  '.docx': [[0x50, 0x4b, 0x03, 0x04]],                          // ZIP
+  '.webp': [[0x52, 0x49, 0x46, 0x46]],                          // RIFF (checked with WEBP below)
+};
+
+function matchesSignature(buffer, ext) {
+  const sigs = SIGNATURES[ext];
+  if (!sigs || !buffer) return false;
+  const ok = sigs.some(sig => sig.every((b, i) => buffer[i] === b));
+  if (ok && ext === '.webp') return buffer.slice(8, 12).toString('ascii') === 'WEBP';
+  return ok;
+}
+
+const extensionFilter = (allowed) => (_req, file, cb) => {
+  // Mobile pickers often report a generic mimetype, so the extension is the
+  // gate here; content is verified after upload by verifyFileContents.
   const ext = path.extname(file.originalname).toLowerCase();
-  if (allowedMimes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
+  if (allowed.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only PDF, DOC, DOCX, PNG, and JPG are allowed.'), false);
+    const list = allowed.map(e => e.slice(1).toUpperCase()).join(', ');
+    cb(new Error(`Invalid file type. Only ${list} files are allowed.`), false);
   }
 };
 
-// Workshop registration: resume upload (max 10MB)
+const verifyFileContents = (req) => {
+  const files = [
+    ...(req.file ? [req.file] : []),
+    ...Object.values(req.files || {}).flat(),
+  ];
+  for (const file of files) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!matchesSignature(file.buffer, ext)) {
+      return `"${file.fieldname}" does not look like a valid ${ext.slice(1).toUpperCase()} file.`;
+    }
+  }
+  return null;
+};
+
+// Workshop registration: resume upload
 const workshopUpload = multer({
   storage,
-  fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: extensionFilter(DOC_EXTENSIONS),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1, fields: 40, fieldSize: 20 * 1024 },
 }).single('resume');
 
-// Participant/paper registration: transaction receipt + student card (max 100MB each)
+// Participant/paper registration: transaction receipt + student card
 const registrationUpload = multer({
   storage,
-  fileFilter,
-  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB
+  fileFilter: extensionFilter(DOC_EXTENSIONS),
+  limits: { fileSize: 10 * 1024 * 1024, files: 2, fields: 40, fieldSize: 64 * 1024 },
 }).fields([
-  { name: 'transactionReceipt', maxCount: 5 },
+  { name: 'transactionReceipt', maxCount: 1 },
   { name: 'studentCard', maxCount: 1 },
 ]);
+
+// Admin image uploads (speaker/reviewer photos, workshop posters)
+const imageUpload = (field) => multer({
+  storage,
+  fileFilter: extensionFilter(IMAGE_EXTENSIONS),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+}).single(field);
 
 // Wrap multer middleware to handle errors gracefully
 const handleUpload = (uploadMiddleware) => (req, res, next) => {
@@ -57,6 +93,10 @@ const handleUpload = (uploadMiddleware) => (req, res, next) => {
         message: err.message,
       });
     }
+    const contentError = verifyFileContents(req);
+    if (contentError) {
+      return res.status(400).json({ success: false, message: contentError });
+    }
     next();
   });
 };
@@ -64,4 +104,5 @@ const handleUpload = (uploadMiddleware) => (req, res, next) => {
 module.exports = {
   workshopUpload: handleUpload(workshopUpload),
   registrationUpload: handleUpload(registrationUpload),
+  imageUpload: (field) => handleUpload(imageUpload(field)),
 };

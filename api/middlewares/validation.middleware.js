@@ -1,6 +1,6 @@
-const { body, validationResult } = require('express-validator');
+const { body, query, validationResult } = require('express-validator');
 
-// ─── Common helper ──────────────────────────────────────────────────────────
+// ─── Common helpers ───────────────────────────────────────────────────────────
 
 const validate = (req, res, next) => {
   const errors = validationResult(req);
@@ -14,89 +14,137 @@ const validate = (req, res, next) => {
   next();
 };
 
-// ─── Workshop Registration ──────────────────────────────────────────────────
+const SHORT = 150;
+const LONG = 3000;
 
-const workshopRules = [
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('fullName').trim().notEmpty().withMessage('Full name is required'),
-  body('mobileNumber').trim().notEmpty().withMessage('Mobile number is required'),
-  body('cnicNumber').trim().notEmpty().withMessage('CNIC number is required'),
-  body('institutionOrg').trim().notEmpty().withMessage('Institution/Organization is required'),
-  body('semesterDesignation').trim().notEmpty().withMessage('Semester/Designation is required'),
-  body('professionalAddress').trim().notEmpty().withMessage('Professional address is required'),
-  body('highestDegree').trim().notEmpty().withMessage('Highest degree is required'),
-  body('quantumCourses').trim().notEmpty().withMessage('Quantum computing courses description is required'),
-  body('whyWorkshopHelps').trim().notEmpty().withMessage('Please describe why the workshop will help you'),
-  body('travelArrangement').trim().notEmpty().withMessage('Travel arrangement description is required'),
-  body('attendanceCertificate').isBoolean().withMessage('Attendance certificate preference is required'),
-  body('termsAgreed')
-    .custom(val => val === true || val === 'true')
-    .withMessage('You must agree to the terms and conditions'),
+const PHONE_RE = /^\+?[0-9][0-9\s()-]{6,19}$/;
+const IEEE_RE = /^\d{8}$/;
+
+const text = (field, label, max = SHORT) =>
+  body(field).isString().withMessage(`${label} is required`).bail()
+    .trim().notEmpty().withMessage(`${label} is required`).bail()
+    .isLength({ max }).withMessage(`${label} must be at most ${max} characters`);
+
+const optionalText = (field, label, max = SHORT) =>
+  body(field).optional({ values: 'falsy' }).isString().trim()
+    .isLength({ max }).withMessage(`${label} must be at most ${max} characters`);
+
+const email = (field, label = 'Valid email') =>
+  body(field).isString().trim().isEmail().withMessage(`${label} is required`).bail()
+    .isLength({ max: 254 }).normalizeEmail({ gmail_remove_dots: false });
+
+const phone = (field, label) =>
+  body(field).isString().trim().matches(PHONE_RE).withMessage(`${label} must be a valid phone number`);
+
+const pastDate = (field, label) =>
+  body(field).isISO8601().withMessage(`${label} must be a valid date`).bail()
+    .custom(v => {
+      const d = new Date(v);
+      return d.getFullYear() >= 2025 && d.getTime() <= Date.now() + 24 * 3600 * 1000;
+    }).withMessage(`${label} is not a plausible payment date`);
+
+const mustBeTrue = (field, message) =>
+  body(field).custom(val => val === true || val === 'true').withMessage(message);
+
+const paymentRules = (prefix = '') => [
+  text(`${prefix}stanTransactionId`, 'STAN/Transaction ID', 64),
+  pastDate(`${prefix}transactionDate`, 'Transaction date'),
+  text(`${prefix}bankDetails`, 'Bank details', 300),
+  text(`${prefix}totalAmountPaid`, 'Total amount paid', 50),
 ];
 
-// ─── Participant Registration ───────────────────────────────────────────────
+// ─── Workshop Registration ────────────────────────────────────────────────────
+
+const workshopRules = [
+  email('email'),
+  text('fullName', 'Full name'),
+  phone('mobileNumber', 'Mobile number'),
+  text('cnicNumber', 'CNIC number', 20).bail()
+    .matches(/^[A-Za-z0-9-]{5,20}$/).withMessage('CNIC number may contain only digits and dashes'),
+  text('institutionOrg', 'Institution/Organization', 200),
+  text('semesterDesignation', 'Semester/Designation'),
+  text('professionalAddress', 'Professional address', 500),
+  text('highestDegree', 'Highest degree'),
+  text('quantumCourses', 'Quantum computing courses description', LONG),
+  text('whyWorkshopHelps', 'Why the workshop will help you', LONG),
+  text('travelArrangement', 'Travel arrangement description', LONG),
+  body('attendanceCertificate').isBoolean().withMessage('Attendance certificate preference is required'),
+  mustBeTrue('termsAgreed', 'You must agree to the terms and conditions'),
+];
+
+// ─── Participant Registration ─────────────────────────────────────────────────
 
 const participantRules = [
   body('registrationType')
     .isIn(['professional', 'student'])
     .withMessage('Registration type must be "professional" or "student"'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('fullName').trim().notEmpty().withMessage('Full name is required'),
-  body('department').trim().notEmpty().withMessage('Department is required'),
-  body('institute').trim().notEmpty().withMessage('Institute is required'),
-  body('contactNo').trim().notEmpty().withMessage('Contact number is required'),
-  body('stanTransactionId').trim().notEmpty().withMessage('STAN/Transaction ID is required'),
-  body('transactionDate').notEmpty().withMessage('Transaction date is required'),
-  body('bankDetails').trim().notEmpty().withMessage('Bank details are required'),
-  body('totalAmountPaid').trim().notEmpty().withMessage('Total amount paid is required'),
-  body('certified')
-    .custom(val => val === true || val === 'true')
-    .withMessage('You must certify that the information is correct'),
+  email('email'),
+  text('fullName', 'Full name'),
+  optionalText('rollNo', 'Roll number', 50),
+  body('rollNo').if(body('registrationType').equals('student'))
+    .isString().trim().notEmpty().withMessage('Roll number is required for students'),
+  text('department', 'Department'),
+  text('institute', 'Institute', 200),
+  phone('contactNo', 'Contact number'),
+  body('ieeeNumber').optional({ values: 'falsy' }).isString().trim()
+    .matches(IEEE_RE).withMessage('IEEE number must be exactly 8 digits'),
+  ...paymentRules(),
+  mustBeTrue('certified', 'You must certify that the information is correct'),
 ];
 
-// ─── Paper Registration ─────────────────────────────────────────────────────
+// ─── Paper Registration ───────────────────────────────────────────────────────
+
+const MAX_CO_AUTHORS = 10;
+
+// Multipart forms send coAuthors as a JSON string; parse it before validating.
+const parseCoAuthors = (req, res, next) => {
+  const { hasCoAuthors, coAuthors } = req.body;
+  if (hasCoAuthors === true || hasCoAuthors === 'true') {
+    if (typeof coAuthors === 'string') {
+      try { req.body.coAuthors = JSON.parse(coAuthors); } catch {
+        return res.status(400).json({ success: false, message: 'Invalid co-author data' });
+      }
+    }
+  } else {
+    req.body.coAuthors = [];
+  }
+  next();
+};
 
 const paperRules = [
   body('registrationType')
     .isIn(['academia_industry', 'student'])
     .withMessage('Registration type must be "academia_industry" or "student"'),
-  body('email').isEmail().withMessage('Valid email is required'),
-  body('paperId').trim().notEmpty().withMessage('Paper ID is required'),
-  body('paperTitle').trim().notEmpty().withMessage('Paper title is required'),
-  body('authorName').trim().notEmpty().withMessage('Author name is required'),
-  body('department').trim().notEmpty().withMessage('Department is required'),
-  body('institution').trim().notEmpty().withMessage('Institution is required'),
-  body('contactNo').trim().notEmpty().withMessage('Contact number is required'),
-  body('stanTransactionId').trim().notEmpty().withMessage('STAN/Transaction ID is required'),
-  body('transactionDate').notEmpty().withMessage('Transaction date is required'),
-  body('bankDetails').trim().notEmpty().withMessage('Bank details are required'),
-  body('totalAmountPaid').trim().notEmpty().withMessage('Total amount paid is required'),
-  body('certified')
-    .custom(val => val === true || val === 'true')
-    .withMessage('You must certify that the information is correct'),
-];
-
-// ─── Co-Author Registration ─────────────────────────────────────────────────
-
-const coAuthorRules = [
-  body('coAuthors').isArray({ min: 1 }).withMessage('At least one co-author is required'),
+  email('email'),
+  text('paperId', 'Paper ID', 50),
+  text('paperTitle', 'Paper title', 500),
+  text('authorName', 'Author name'),
+  optionalText('rollNo', 'Roll number', 50),
+  text('department', 'Department'),
+  text('institution', 'Institution', 200),
+  phone('contactNo', 'Contact number'),
+  ...paymentRules(),
+  mustBeTrue('certified', 'You must certify that the information is correct'),
+  body('coAuthors').isArray({ max: MAX_CO_AUTHORS }).withMessage(`At most ${MAX_CO_AUTHORS} co-authors are allowed`),
   body('coAuthors.*.registrationType')
     .isIn(['academia_industry', 'student'])
     .withMessage('Co-author registration type is required'),
-  body('coAuthors.*.email').isEmail().withMessage('Valid co-author email is required'),
-  body('coAuthors.*.paperId').trim().notEmpty().withMessage('Co-author paper ID is required'),
-  body('coAuthors.*.paperTitle').trim().notEmpty().withMessage('Co-author paper title is required'),
-  body('coAuthors.*.authorName').trim().notEmpty().withMessage('Co-author name is required'),
-  body('coAuthors.*.department').trim().notEmpty().withMessage('Co-author department is required'),
-  body('coAuthors.*.institution').trim().notEmpty().withMessage('Co-author institution is required'),
-  body('coAuthors.*.contactNo').trim().notEmpty().withMessage('Co-author contact number is required'),
-  body('coAuthors.*.stanTransactionId').trim().notEmpty().withMessage('Co-author transaction ID is required'),
-  body('coAuthors.*.transactionDate').notEmpty().withMessage('Co-author transaction date is required'),
-  body('coAuthors.*.bankDetails').trim().notEmpty().withMessage('Co-author bank details are required'),
-  body('coAuthors.*.totalAmountPaid').trim().notEmpty().withMessage('Co-author amount paid is required'),
-  body('coAuthors.*.certified')
-    .custom(val => val === true || val === 'true')
-    .withMessage('Co-author must certify information'),
+  email('coAuthors.*.email', 'Valid co-author email'),
+  text('coAuthors.*.paperId', 'Co-author paper ID', 50),
+  text('coAuthors.*.paperTitle', 'Co-author paper title', 500),
+  text('coAuthors.*.authorName', 'Co-author name'),
+  optionalText('coAuthors.*.rollNo', 'Co-author roll number', 50),
+  text('coAuthors.*.department', 'Co-author department'),
+  text('coAuthors.*.institution', 'Co-author institution', 200),
+  phone('coAuthors.*.contactNo', 'Co-author contact number'),
+  ...paymentRules('coAuthors.*.'),
+  mustBeTrue('coAuthors.*.certified', 'Co-author must certify information'),
+];
+
+// ─── IEEE check ───────────────────────────────────────────────────────────────
+
+const ieeeCheckRules = [
+  query('number').isString().trim().matches(IEEE_RE).withMessage('IEEE number must be exactly 8 digits'),
 ];
 
 module.exports = {
@@ -104,5 +152,6 @@ module.exports = {
   workshopRules,
   participantRules,
   paperRules,
-  coAuthorRules,
+  parseCoAuthors,
+  ieeeCheckRules,
 };

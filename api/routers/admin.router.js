@@ -16,13 +16,19 @@ const previousConferenceController = require('../controllers/admin/previousConfe
 const reviewerController = require('../controllers/admin/reviewer.controller');
 const multer = require('multer');
 
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const { imageUpload } = require('../middlewares/upload.middleware');
+const { loginLimiter } = require('../middlewares/rateLimit.middleware');
+
+// Image-only uploads (PNG/JPG/WEBP, content-checked) for public site photos/posters
+const upload = { single: imageUpload };
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
-router.post('/login', authController.login);
+router.post('/login', loginLimiter, authController.login);
 
 // All routes below require admin JWT
 router.use(verifyAdmin);
+
+router.post('/logout-all', authController.logoutAll);
 
 // ── Speakers ─────────────────────────────────────────────────────────────────
 router.get('/speakers', speakerController.getAll);
@@ -86,10 +92,24 @@ const cfpStorage = multer.diskStorage({
     cb(null, CFP_DIR);
   },
   filename: (_req, file, cb) => {
-    cb(null, `${Date.now()}${path.extname(file.originalname)}`);
+    cb(null, `${Date.now()}${path.extname(file.originalname).toLowerCase()}`);
   },
 });
-const cfpUpload = multer({ storage: cfpStorage, limits: { fileSize: 50 * 1024 * 1024 } });
+// These files are served from the site's own origin, so only inert types are
+// accepted. An .html/.svg here would be stored XSS against admins.
+const CFP_ALLOWED = {
+  poster: ['.png', '.jpg', '.jpeg', '.webp'],
+  latexTemplate: ['.zip'],
+};
+const cfpUpload = multer({
+  storage: cfpStorage,
+  limits: { fileSize: 50 * 1024 * 1024, files: 2 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (CFP_ALLOWED[file.fieldname]?.includes(ext)) cb(null, true);
+    else cb(Object.assign(new Error(`Invalid file type for ${file.fieldname}.`), { status: 400, expose: true }), false);
+  },
+});
 router.put('/cfp-assets', cfpUpload.fields([
   { name: 'poster', maxCount: 1 },
   { name: 'latexTemplate', maxCount: 1 },
@@ -102,5 +122,6 @@ router.get('/registrations/participant', registrationController.getParticipant);
 router.get('/registrations/participant/export', registrationController.exportParticipant);
 router.get('/registrations/paper', registrationController.getPaper);
 router.get('/registrations/paper/export', registrationController.exportPaper);
+router.get('/registrations/:kind/:id/file/:field', registrationController.getDocumentUrl);
 
 module.exports = router;

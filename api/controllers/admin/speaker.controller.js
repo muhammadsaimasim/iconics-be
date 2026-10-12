@@ -1,5 +1,5 @@
 const prisma = require('../../../utils/prisma');
-const { uploadFile } = require('../../../utils/supabase');
+const { uploadPublicFile } = require('../../../utils/supabase');
 
 const parseTopics = (topics) => {
   if (Array.isArray(topics)) return topics;
@@ -20,7 +20,7 @@ const create = async (req, res, next) => {
     let photo = req.body.photo || null;
 
     if (req.file) {
-      photo = await uploadFile(req.file.buffer, req.file.originalname, 'registerations', 'speakers');
+      photo = await uploadPublicFile(req.file.buffer, req.file.originalname, 'speakers');
     }
 
     const speaker = await prisma.speaker.create({
@@ -41,7 +41,7 @@ const update = async (req, res, next) => {
     let photo = req.body.photo;
 
     if (req.file) {
-      photo = await uploadFile(req.file.buffer, req.file.originalname, 'registerations', 'speakers');
+      photo = await uploadPublicFile(req.file.buffer, req.file.originalname, 'speakers');
     }
 
     const data = {

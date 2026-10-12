@@ -1,5 +1,5 @@
 const prisma = require('../../utils/prisma');
-const { uploadFile } = require('../../utils/supabase');
+const { uploadPrivateFile } = require('../../utils/supabase');
 
 const register = async (req, res, next) => {
   try {
@@ -10,13 +10,12 @@ const register = async (req, res, next) => {
       travelArrangement, attendanceCertificate, termsAgreed,
     } = req.body;
 
-    // Upload resume if provided
+    // Upload resume if provided (stored as a private object path, not a public URL)
     let resumeUrl = null;
     if (req.file) {
-      resumeUrl = await uploadFile(
+      resumeUrl = await uploadPrivateFile(
         req.file.buffer,
         req.file.originalname,
-        'registerations',
         'workshop-resumes'
       );
     }
@@ -50,29 +49,4 @@ const register = async (req, res, next) => {
   }
 };
 
-const getAll = async (_req, res, next) => {
-  try {
-    const registrations = await prisma.workshopRegistration.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json({ success: true, data: registrations });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getById = async (req, res, next) => {
-  try {
-    const registration = await prisma.workshopRegistration.findUnique({
-      where: { id: req.params.id },
-    });
-    if (!registration) {
-      return res.status(404).json({ success: false, message: 'Registration not found' });
-    }
-    res.json({ success: true, data: registration });
-  } catch (error) {
-    next(error);
-  }
-};
-
-module.exports = { register, getAll, getById };
+module.exports = { register };

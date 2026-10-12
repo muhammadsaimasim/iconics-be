@@ -1,5 +1,5 @@
 const prisma = require('../../utils/prisma');
-const { uploadFile } = require('../../utils/supabase');
+const { uploadPrivateFile } = require('../../utils/supabase');
 
 const register = async (req, res, next) => {
   try {
@@ -10,24 +10,35 @@ const register = async (req, res, next) => {
       totalAmountPaid, certified, ieeeNumber,
     } = req.body;
 
-    // Upload files
-    let transactionReceiptUrl = null;
-    let studentCardUrl = null;
+    // IEEE numbers unlock a discount / fee waiver, so each may be used only once.
+    // Enforced here too: the check-ieee endpoint is only a UX hint.
+    const ieee = ieeeNumber?.trim() || null;
+    if (ieee) {
+      const existing = await prisma.participantRegistration.findFirst({
+        where: { ieeeNumber: ieee },
+        select: { id: true },
+      });
+      if (existing) {
+        return res.status(409).json({ success: false, message: 'This IEEE number has already been used for a registration.' });
+      }
+    }
+
+    // Upload files (stored as private object paths, not public URLs)
+    let transactionReceiptPath = null;
+    let studentCardPath = null;
 
     if (req.files?.transactionReceipt?.length) {
-      transactionReceiptUrl = await uploadFile(
+      transactionReceiptPath = await uploadPrivateFile(
         req.files.transactionReceipt[0].buffer,
         req.files.transactionReceipt[0].originalname,
-        'registerations',
         'participant-receipts'
       );
     }
 
     if (req.files?.studentCard?.length) {
-      studentCardUrl = await uploadFile(
+      studentCardPath = await uploadPrivateFile(
         req.files.studentCard[0].buffer,
         req.files.studentCard[0].originalname,
-        'registerations',
         'participant-student-cards'
       );
     }
@@ -45,10 +56,10 @@ const register = async (req, res, next) => {
         transactionDate: new Date(transactionDate),
         bankDetails,
         totalAmountPaid,
-        transactionReceipt: transactionReceiptUrl,
-        studentCard: studentCardUrl,
+        transactionReceipt: transactionReceiptPath,
+        studentCard: studentCardPath,
         certified: certified === true || certified === 'true',
-        ieeeNumber: ieeeNumber?.trim() || null,
+        ieeeNumber: ieee,
       },
     });
 
@@ -62,39 +73,10 @@ const register = async (req, res, next) => {
   }
 };
 
-const getAll = async (_req, res, next) => {
-  try {
-    const registrations = await prisma.participantRegistration.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json({ success: true, data: registrations });
-  } catch (error) {
-    next(error);
-  }
-};
-
-const getById = async (req, res, next) => {
-  try {
-    const registration = await prisma.participantRegistration.findUnique({
-      where: { id: req.params.id },
-    });
-    if (!registration) {
-      return res.status(404).json({ success: false, message: 'Registration not found' });
-    }
-    res.json({ success: true, data: registration });
-  } catch (error) {
-    next(error);
-  }
-};
-
 const checkIeee = async (req, res, next) => {
   try {
-    const { number } = req.query;
-    if (!number?.trim()) {
-      return res.status(400).json({ success: false, message: 'IEEE number required.' });
-    }
     const existing = await prisma.participantRegistration.findFirst({
-      where: { ieeeNumber: number.trim() },
+      where: { ieeeNumber: req.query.number.trim() },
       select: { id: true },
     });
     res.json({ success: true, taken: !!existing });
@@ -103,4 +85,4 @@ const checkIeee = async (req, res, next) => {
   }
 };
 
-module.exports = { register, getAll, getById, checkIeee };
+module.exports = { register, checkIeee };
