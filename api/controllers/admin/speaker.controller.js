@@ -7,6 +7,11 @@ const parseTopics = (topics) => {
   try { return JSON.parse(topics); } catch { return [topics]; }
 };
 
+const parseWorkshops = (workshops, type) => {
+  if (type !== 'workshop') return [];
+  return parseTopics(workshops).map(w => String(w).trim()).filter(Boolean);
+};
+
 const getAll = async (_req, res, next) => {
   try {
     const speakers = await prisma.speaker.findMany({ orderBy: { order: 'asc' } });
@@ -16,7 +21,7 @@ const getAll = async (_req, res, next) => {
 
 const create = async (req, res, next) => {
   try {
-    const { name, title, institution, country, type, bio, topics, website, linkedin, scholar, order } = req.body;
+    const { name, title, institution, country, type, bio, topics, website, linkedin, scholar, order, workshops } = req.body;
     let photo = req.body.photo || null;
 
     if (req.file) {
@@ -27,6 +32,7 @@ const create = async (req, res, next) => {
       data: {
         name, title, institution, country, type, bio,
         topics: parseTopics(topics),
+        workshops: parseWorkshops(workshops, type),
         photo, website: website || null, linkedin: linkedin || null, scholar: scholar || null,
         order: parseInt(order) || 0,
       },
@@ -37,7 +43,7 @@ const create = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
-    const { name, title, institution, country, type, bio, topics, website, linkedin, scholar, order } = req.body;
+    const { name, title, institution, country, type, bio, topics, website, linkedin, scholar, order, workshops } = req.body;
     let photo = req.body.photo;
 
     if (req.file) {
@@ -47,6 +53,7 @@ const update = async (req, res, next) => {
     const data = {
       name, title, institution, country, type, bio,
       topics: parseTopics(topics),
+      workshops: parseWorkshops(workshops, type),
       website: website || null, linkedin: linkedin || null, scholar: scholar || null,
       order: parseInt(order) || 0,
     };

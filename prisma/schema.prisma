@@ -20,6 +20,7 @@ model Speaker {
   type        String   // "keynote" or "workshop"
   bio         String   @db.Text
   topics      String[] // array of topic strings
+  workshops   String[] @default([]) // workshop titles (type "workshop" only)
   website     String?
   linkedin    String?
   scholar     String?
